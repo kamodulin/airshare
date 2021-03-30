@@ -32,7 +32,7 @@ class Connection(Thread):
     def run(self):
         while self.active:
             try:
-                data = self.sock.recv(1024)
+                data = self.sock.recv(4096)
 
                 if data:
                     print(data.decode(), f"from: {self.conn_node_id}")
@@ -100,7 +100,7 @@ class Node(Thread):
 
     def accept_node(self):
         conn, addr = self.server.accept()
-        conn_node_id = conn.recv(1024).decode()
+        conn_node_id = conn.recv(4096).decode()
         conn.send(self.id.encode())
 
         connection = self.create_connection(conn, conn_node_id)
@@ -121,12 +121,12 @@ class Node(Thread):
                 self.stop()
                 logging.error(e)
 
-        self.server.close()
+        self.stop()
 
     def stop(self):
         if self.active:
             self.active = False
-
+            
             self.disconnect_all()
             self.unbind_server()
 
@@ -143,9 +143,10 @@ class Node(Thread):
         else:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.connect((host, port))
                 sock.send(self.id.encode())
-                conn_node_id = sock.recv(1024).decode()
+                conn_node_id = sock.recv(4096).decode()
 
                 connection = self.create_connection(sock, conn_node_id)
 

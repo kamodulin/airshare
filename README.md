@@ -1,4 +1,4 @@
-# airshare
+<!-- # airshare
 
 ## Features
 
@@ -18,4 +18,4 @@ cd path/to/project
 Run airshare
 ```bash
 airshare
-```
+``` -->
