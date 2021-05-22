@@ -1,14 +1,11 @@
-import argparse
-
 from networking import Node
-from utils import addr, get_args
+from utils import get_args
 
 
 class Session:
     def __init__(self, args):
-        self.local = args.local
-        self.remote = args.remote
-
+        self.remote = (str(args.ip), int(args.port)) if args.ip and args.port else None
+    
         self.node = self.init_node()
 
         self.log = {}
@@ -17,7 +14,7 @@ class Session:
             self.node.connect_to_node(*self.remote)
 
     def init_node(self):
-        return Node(*self.local) if self.local else Node()
+        return Node()
 
     def prompt(self, message):
         return input(message + " ")
