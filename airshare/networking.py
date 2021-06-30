@@ -25,7 +25,6 @@ class Connection(Thread):
         self.laddr = sock.getsockname()
         self.raddr = sock.getpeername()
         self.conn_node_id = conn_node_id
-
         self.active = True
         self.start()
 
@@ -35,7 +34,7 @@ class Connection(Thread):
                 data = self.sock.recv(4096)
 
                 if data:
-                    print(data.decode(), f"from: {self.conn_node_id}")
+                    self.node.data = data.decode()
 
                 else:
                     self.node.disconnect_connection(self)
@@ -74,6 +73,7 @@ class Node(Thread):
         self.active = False
         self.connections = []
 
+        self.data = ""
         self.start()
 
         logging.info(f"Node started {self._addr}")

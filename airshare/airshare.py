@@ -1,3 +1,4 @@
+from clipboard import Clipboard
 from networking import Node
 from utils import get_args
 
@@ -7,11 +8,13 @@ class Session:
         self.remote = (str(args.ip), int(args.port)) if args.ip and args.port else None
     
         self.node = self.init_node()
-
         self.log = {}
 
         if self.remote:
             self.node.connect_to_node(*self.remote)
+
+        if args.clipboard:
+            self.clipboard = Clipboard(self.node)
 
     def init_node(self):
         return Node()
@@ -21,10 +24,8 @@ class Session:
 
 
 if __name__ == "__main__":
-    """Begin a session for continuous streaming of clipboard data.
-
-    Option to specify a local address and directly connect to remote. These are in
-    the form of host:port for simplicity (e.g 192.168.0.10:8000).
+    """
+    Create a node with options to connect a remote and share host clipboard.
     """
 
     args = get_args()

@@ -3,10 +3,12 @@ import time
 from pyperclip import copy, paste
 from threading import Thread
 
+
 class Clipboard(Thread):
-    def __init__(self):
+    def __init__(self, node):
         super(Clipboard, self).__init__()
-        
+    
+        self.node = node
         self.cpb = paste()
         self.start()
 
@@ -14,18 +16,13 @@ class Clipboard(Thread):
         while True:
             tmp = paste()
 
-            if tmp:
-                print(tmp)
-
-            # if tmp != self.cpb:
-            #     self.cpb = tmp
-            #     self.node.send_all(self.cpb)
-            
-            # tmp = RECV
-            # if tmp != self.cpb:
-            #     self.cpb = tmp
-            #     copy(tmp)
+            if tmp != self.cpb:
+                self.cpb = tmp
+                self.node.send_all(self.cpb)
+                self.node.data = self.cpb
                 
-            time.sleep(1)
+            elif tmp != self.node.data and self.node.data:
+                self.cpb = self.node.data
+                copy(self.cpb)
 
-cpb = Clipboard()
+            time.sleep(1)
