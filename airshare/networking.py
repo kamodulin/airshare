@@ -38,7 +38,9 @@ class Connection(Thread):
 
                 else:
                     self.node.disconnect_connection(self)
-                    logging.info(f"Connection to {self.laddr[0]}:{self.laddr[1]} was lost")
+                    logging.info(
+                        f"Connection to {self.laddr[0]}:{self.laddr[1]} was lost"
+                    )
 
             except socket.timeout:
                 pass
@@ -99,11 +101,11 @@ class Node(Thread):
         self.server.close()
 
     def accept_node(self):
-        conn, addr = self.server.accept()
+        conn, _ = self.server.accept()
         conn_node_id = conn.recv(4096).decode()
         conn.send(self.id.encode())
 
-        connection = self.create_connection(conn, conn_node_id)
+        self.create_connection(conn, conn_node_id)
 
         logging.info(f"Connected by: {conn_node_id}")
 
@@ -126,7 +128,7 @@ class Node(Thread):
     def stop(self):
         if self.active:
             self.active = False
-            
+
             self.disconnect_all()
             self.unbind_server()
 
@@ -148,7 +150,7 @@ class Node(Thread):
                 sock.send(self.id.encode())
                 conn_node_id = sock.recv(4096).decode()
 
-                connection = self.create_connection(sock, conn_node_id)
+                self.create_connection(sock, conn_node_id)
 
                 logging.info(f"Connected to: {conn_node_id}")
 
