@@ -27,6 +27,6 @@ class Clipboard(Thread):
                     copy(self.cpb)
 
                 time.sleep(1)
-                
+
             else:
                 time.sleep(5)

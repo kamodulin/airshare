@@ -15,6 +15,7 @@ from threading import Thread, ThreadError
 socket.setdefaulttimeout(1)
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 
+
 class Connection(Thread):
     def __init__(self, node, sock, conn_node_id):
         super(Connection, self).__init__()
@@ -129,10 +130,10 @@ class Node(Thread):
     def stop(self):
         if self.active:
             self.active = False
-            
+
             self.disconnect_all()
             self.unbind_server()
-            
+
             self.join(1)
         else:
             logging.error("Node has already stopped.")
@@ -174,7 +175,7 @@ class Node(Thread):
     def disconnect_all(self):
         while self.connections:
             self.disconnect_connection(self.connections[0])
-    
+
     def send(self, connection, msg):
         connection.send(msg)
 
