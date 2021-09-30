@@ -2,7 +2,7 @@ import pytest
 import socket
 import time
 
-from airshare.networking import Node, Connection
+from airshare import Node, Connection
 
 
 class TestConnection:
@@ -47,15 +47,11 @@ class TestConnection:
 
 
 class TestNode:
-    def test_node_init(self):
-        node = Node()
-        assert node.active
-
-    def test_node_init_with_params(self):
-        ip = "127.0.0.1"
-        port = 5800
+    @pytest.mark.parametrize("ip", [None, "127.0.0.1"])
+    @pytest.mark.parametrize("port", [None, 5555])
+    def test_node_init(self, ip, port):
         node = Node(ip, port)
-        assert (ip, port) == node._addr
+        assert node.active
 
     def test_node_stop(self):
         node = Node()
