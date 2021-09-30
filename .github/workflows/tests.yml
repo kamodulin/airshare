@@ -30,7 +30,6 @@ jobs:
         pip install --upgrade pip
         pip install .
         pip install pytest pytest-cov
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     
     - name: Test on Ubuntu
       if: matrix.os == 'ubuntu-latest'
@@ -42,5 +41,4 @@ jobs:
 
     - name: Test on MacOS
       if: matrix.os == 'macos-latest'
-      run: |
-        pytest --cov=airshare tests
+      run: pytest --cov=airshare tests

@@ -3,6 +3,9 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
+with open("requirements.txt", "r", encoding="utf-8") as f:
+    INSTALL_REQUIRES = f.read().splitlines()
+
 setup(
     name="airshare",
     version="0.0.1",
@@ -13,5 +16,6 @@ setup(
     author="Kamran Ahmed",
     packages=find_packages(),
     include_package_data=True,
+    install_requires=INSTALL_REQUIRES,
     zip_safe=False
 )
