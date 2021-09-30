@@ -32,10 +32,15 @@ jobs:
         pip install pytest pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     
-    - name: Install copy/paste on Ubuntu
+    - name: Test on Ubuntu
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install xclip
+      run: |
+        sudo apt-get update
+        sudo apt-get install xclip
+        sudo apt-get install xvfb
+        xvfb-run pytest --cov=airshare tests
 
-    - name: Test with pytest
+    - name: Test on MacOS
+      if: matrix.os == 'macos-latest'
       run: |
         pytest --cov=airshare tests
