@@ -10,6 +10,8 @@ class Clipboard(Thread):
 
         self.node = node
         self.cpb = paste()
+        self.active = True
+        self.daemon = True
         self.start()
 
     def run(self):
