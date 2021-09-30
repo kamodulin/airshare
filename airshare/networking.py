@@ -10,11 +10,10 @@ import logging
 import socket
 
 from hashlib import sha1
-from threading import Thread
+from threading import Thread, ThreadError
 
 socket.setdefaulttimeout(1)
 logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
-
 
 class Connection(Thread):
     def __init__(self, node, sock, conn_node_id):
@@ -26,6 +25,7 @@ class Connection(Thread):
         self.raddr = sock.getpeername()
         self.conn_node_id = conn_node_id
         self.active = True
+        self.daemon = True
         self.start()
 
     def run(self):
@@ -37,10 +37,10 @@ class Connection(Thread):
                     self.node.data = data.decode()
 
                 else:
-                    self.node.disconnect_connection(self)
                     logging.info(
                         f"Connection to {self.laddr[0]}:{self.laddr[1]} was lost"
                     )
+                    self.node.disconnect_connection(self)
 
             except socket.timeout:
                 pass
@@ -49,20 +49,22 @@ class Connection(Thread):
                 self.node.disconnect_connection(self)
                 logging.error(e)
 
-        self.sock.close()
-
-    # encryption
     def send(self, msg):
         self.sock.sendall(str(msg).encode())
 
     def stop(self):
         if self.active:
             self.active = False
+            self.join(1)
+
         else:
             logging.warning("Connection is already stopped.")
 
-    def __repr__(self):
+    def __str__(self):
         return f"<Connection raddr={self.raddr[0]}:{self.raddr[1]}>"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({repr(self.node)}, {self.sock}, {self.conn_node_id})"
 
 
 class Node(Thread):
@@ -72,6 +74,7 @@ class Node(Thread):
         self.init_server(host, port)
 
         self.id = sha1(self.addr.encode()).hexdigest()
+        self.daemon = True
         self.active = False
         self.connections = []
 
@@ -123,24 +126,23 @@ class Node(Thread):
                 self.stop()
                 logging.error(e)
 
-        self.stop()
-
     def stop(self):
         if self.active:
             self.active = False
-
+            
             self.disconnect_all()
             self.unbind_server()
-
+            
+            self.join(1)
         else:
-            logging.warning("Node has already stopped.")
+            logging.error("Node has already stopped.")
 
     def connect_to_node(self, host, port):
         if (host, port) == self._addr:
-            logging.error("Cannot connect to self.")
+            raise AssertionError("Cannot connect to self.")
 
         elif any([(host, port) == c.raddr for c in self.connections]):
-            logging.error("Peer is already connected.")
+            raise AssertionError("Peer is already connected.")
 
         else:
             try:
@@ -162,13 +164,17 @@ class Node(Thread):
         self.connections.append(connection)
 
     def disconnect_connection(self, connection):
-        connection.stop()
-        del self.connections[self.connections.index(connection)]
+        if connection in self.connections:
+            self.connections.pop(self.connections.index(connection))
+            try:
+                connection.stop()
+            except ThreadError:
+                pass
 
     def disconnect_all(self):
-        for c in self.connections:
-            self.disconnect_connection(c)
-
+        while self.connections:
+            self.disconnect_connection(self.connections[0])
+    
     def send(self, connection, msg):
         connection.send(msg)
 
@@ -176,5 +182,8 @@ class Node(Thread):
         for c in self.connections:
             self.send(c, msg)
 
-    def __repr__(self):
+    def __str__(self):
         return f"<Node server={self.addr}, active={self.active}, conns={self.connections}, id={self.id}>"
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}('{self._addr[0]}', {self._addr[1]})"
