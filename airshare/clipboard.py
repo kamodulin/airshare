@@ -16,8 +16,6 @@ class Clipboard(Thread):
         while True:
             if self.node.connections:
                 tmp = paste()
-                
-                print(tmp)
 
                 if tmp != self.cpb:
                     self.cpb = tmp
