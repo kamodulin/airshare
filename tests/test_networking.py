@@ -52,6 +52,7 @@ class TestNode:
     def test_node_init(self, ip, port):
         node = Node(ip, port)
         assert node.active
+        node.stop()
 
     def test_node_stop(self):
         node = Node()
