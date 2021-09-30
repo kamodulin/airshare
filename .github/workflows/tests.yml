@@ -34,7 +34,7 @@ jobs:
     
     - name: Install copy/paste on Ubuntu
       if: matrix.os == 'ubuntu-latest'
-      run: sudo apt-get install xsel xclip
+      run: sudo apt-get install xclip
 
     - name: Test with pytest
       run: |
