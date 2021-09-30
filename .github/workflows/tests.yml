@@ -35,8 +35,8 @@ jobs:
     - name: Install copy/paste on Ubuntu
       if: matrix.os == 'ubuntu-latest'
       run: |
-      sudo apt-get install xsel xclip
-      pip install gtk PyQt4
+        sudo apt-get install xsel xclip
+        pip install gtk PyQt4
 
     - name: Test with pytest
       run: |
