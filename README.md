@@ -1,6 +1,8 @@
 # airshare
 
- airshare is a peer-to-peer socket utility that allows clipboard data to be continuously streamed between multiple computers. If continuity is enabled on Apple devices, an iPhone's clipboard can be shared to a Windows PC. 
+[![Test](https://github.com/kamodulin/airshare/actions/workflows/tests.yml/badge.svg)](https://github.com/kamodulin/airshare/actions/workflows/tests.yml)
+
+airshare is a peer-to-peer socket utility that allows clipboard data to be continuously streamed between multiple computers. If continuity is enabled on Apple devices, an iPhone's clipboard can be shared to a Windows PC. 
 
 ## Features
 
