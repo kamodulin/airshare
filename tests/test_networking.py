@@ -1,118 +1,113 @@
 import pytest
-import socket
+import random
+import string
 import time
 
-from airshare import Node, Connection
+from airshare import Node
 
 
-class TestConnection:
-    def test_conn_init(self):
-        ip = "127.0.0.1"
-        port = 8888
-
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind((ip, port))
-        server.listen(2)
-        server.setblocking(False)
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        sock.connect((ip, port))
-        server.accept()
-
-        node = Node()
-        conn = Connection(node, sock, "uid")
-        assert conn.active and conn.raddr == (ip, port)
-
-    def test_conn_stop(self):
-        ip = "127.0.0.1"
-        port = 8888
-
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        server.bind((ip, port))
-        server.listen(2)
-        server.setblocking(False)
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        sock.connect((ip, port))
-        server.accept()
-
-        node = Node()
-        conn = Connection(node, sock, "uid")
-        conn.stop()
-        assert not conn.active
+def create_nodes(num, ip=None, port=None):
+    if num == 1:
+        return Node(ip, port)
+    return [Node() for _ in range(num)]
 
 
-class TestNode:
-    @pytest.mark.parametrize("ip", [None, "127.0.0.1"])
-    @pytest.mark.parametrize("port", [None, 5555])
-    def test_node_init(self, ip, port):
-        node = Node(ip, port)
-        assert node.active
-        node.stop()
+def stop(*args):
+    for node in args:
+        if node.active:
+            node.stop()
 
-    def test_node_stop(self):
-        node = Node()
-        node.stop()
-        assert not node.active
 
-    def test_node_connect_self(self):
-        with pytest.raises(AssertionError):
-            node = Node()
-            node.connect_to_node(*node._addr)
+@pytest.mark.parametrize("ip", [None, "127.0.0.1"])
+@pytest.mark.parametrize("port", [None, 5555])
+def test_node_init(ip, port):
+    node = create_nodes(1, ip, port)
+    assert node.active
+    stop(node)
 
-    def test_node_connect_remote(self):
-        node = Node()
-        remote = Node()
-        node.connect_to_node(*remote._addr)
 
-    def test_node_connect_twice(self):
-        with pytest.raises(AssertionError):
-            node = Node()
-            remote = Node()
-            node.connect_to_node(*remote._addr)
-            node.connect_to_node(*remote._addr)
+def test_node_stop():
+    node = create_nodes(1)
+    stop(node)
+    assert not node.active
 
-    def test_node_destroy_connection(self):
-        node = Node()
-        remote = Node()
-        node.connect_to_node(*remote._addr)
-        node.stop()
-        assert not node.connections
 
-    def test_node_connect_multiple_remotes(self):
-        node = Node()
-        a = Node()
-        b = Node()
-        node.connect_to_node(*a._addr)
-        node.connect_to_node(*b._addr)
+def test_node_connect_self():
+    with pytest.raises(AssertionError):
+        node = create_nodes(1)
+        node.connect_to_node(*node._addr)
+    stop(node)
 
-    def test_node_destroy_all_connections(self):
-        node = Node()
-        a = Node()
-        b = Node()
-        node.connect_to_node(*a._addr)
-        node.connect_to_node(*b._addr)
-        node.stop()
-        assert not node.connections
 
-    def test_node_send_remote(self):
-        node = Node()
-        remote = Node()
-        node.connect_to_node(*remote._addr)
-        node.send(node.connections[0], "airshare")
-        time.sleep(1)
-        assert remote.data == "airshare"
+def test_node_connect_remote():
+    nodes = p1, p2 = create_nodes(2)
+    p1.connect_to_node(*p2._addr)
+    stop(*nodes)
 
-    def test_node_send_all(self):
-        node = Node()
-        a = Node()
-        b = Node()
-        node.connect_to_node(*a._addr)
-        node.connect_to_node(*b._addr)
-        node.send_all("airshare")
-        time.sleep(1)
-        assert a.data == "airshare" and b.data == "airshare"
+
+def test_node_connect_after_stopped():
+    nodes = p1, p2 = create_nodes(2)
+    p1.stop()
+    with pytest.raises(AssertionError):
+        p1.connect_to_node(*p2._addr)
+    stop(*nodes)
+
+
+def test_node_bidrectional():
+    nodes = p1, p2 = create_nodes(2)
+    p1.connect_to_node(*p2._addr)
+    p2.connect_to_node(*p1._addr)
+    stop(*nodes)
+
+
+def test_node_connect_twice():
+    with pytest.raises(AssertionError):
+        nodes = create_nodes(2)
+        for _ in range(2):
+            nodes[0].connect_to_node(*nodes[1]._addr)
+    stop(*nodes)
+
+
+def test_node_destroy_connection():
+    nodes = p1, p2 = create_nodes(2)
+    p1.connect_to_node(*p2._addr)
+    p1.stop()
+    time.sleep(2)
+    assert not p1.connections and not p2.connections
+    stop(*nodes)
+
+
+def test_node_connect_multiple_remotes():
+    nodes = p1, p2, p3 = create_nodes(3)
+    p1.connect_to_node(*p2._addr)
+    p1.connect_to_node(*p3._addr)
+    stop(*nodes)
+
+
+def test_node_destroy_all_connections():
+    nodes = p1, p2, p3 = create_nodes(3)
+    p1.stop()
+    assert not p1.connections and not p2.connections and not p3.connections
+    stop(*nodes)
+
+
+def test_node_send_remote():
+    nodes = p1, p2 = create_nodes(2)
+    data = "".join(random.sample(string.ascii_letters + string.digits, 20))
+    p1.connect_to_node(*p2._addr)
+    p1.send(p1.connections[0], data)
+    time.sleep(1)
+    assert p2.data == data
+    stop(*nodes)
+
+
+def test_node_send_all():
+    nodes = p1, *peers = create_nodes(4)
+    data = "".join(random.sample(string.ascii_letters + string.digits, 20))
+    for peer in peers:
+        p1.connect_to_node(*peer._addr)
+    p1.send_all(data)
+    time.sleep(1)
+    for peer in peers:
+        assert peer.data == data
+    stop(*nodes)
