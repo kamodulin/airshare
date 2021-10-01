@@ -7,10 +7,8 @@ from airshare import Session
 from pyperclip import copy
 
 
-@pytest.mark.parametrize("host", [None, "127.0.0.1:5555"])
-@pytest.mark.parametrize("remote", [None, "127.0.0.1:5556"])
-def test_session_init(host, remote):
-    s = Session(host, remote)
+def test_session_init():
+    s = Session()
     s.stop()
 
 
